@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TextInput, PasswordInput, Button, Container, Title, Paper, Alert } from '@mantine/core';
+import { TextInput, PasswordInput, Button, Container, Title, Paper, Alert, Text, Stack } from '@mantine/core';
+import { IconLogin, IconMovie } from '@tabler/icons-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -34,15 +35,21 @@ export default function Login() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">Login to CinemaVault</Title>
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        {error && <Alert color="red" mb="md">{error}</Alert>}
-        <TextInput label="Email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <PasswordInput label="Password" placeholder="Your password" mt="md" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button fullWidth mt="xl" onClick={handleLogin} loading={loading}>Login</Button>
-        <Button variant="subtle" fullWidth mt="md" onClick={() => navigate('/register')}>Register</Button>
-      </Paper>
-    </Container>
+    <div className="cv-auth-bg">
+      <Container size={420} py="xl">
+        <Stack align="center" mb="lg">
+          <IconMovie size={48} color="#ffd147" />
+          <Title order={2} ta="center">Welcome to CinemaVault</Title>
+          <Text c="dimmed" ta="center" size="sm">Sign in to explore films, save favourites and manage your watchlist.</Text>
+        </Stack>
+        <Paper withBorder shadow="md" p={30} radius="md">
+          {error && <Alert color="red" mb="md">{error}</Alert>}
+          <TextInput label="Email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <PasswordInput label="Password" placeholder="Your password" mt="md" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <Button fullWidth mt="xl" color="cinema" leftSection={<IconLogin size={18} />} onClick={handleLogin} loading={loading}>Login</Button>
+          <Button variant="subtle" fullWidth mt="md" onClick={() => navigate('/register')}>Create an account</Button>
+        </Paper>
+      </Container>
+    </div>
   );
 }

@@ -10,9 +10,9 @@ React TypeScript Single Page Application (SPA) for the CinemaVault film discover
 - **Favourites**: Save and manage favourite films
 - **Watchlist / Watched**: Track viewing progress
 - **Messages**: Contact administrator about films; admin can reply and delete
-- **Profile**: Upload profile photo
-- **Admin panel**: CRUD film management + OMDB import
-- **Responsive UI**: Mobile-friendly navigation with Mantine components
+- **Profile**: Update username and upload profile photo
+- **Admin panel**: Dashboard stats, CRUD film management + OMDB import
+- **Responsive UI**: Dark cinema theme with Mantine, reusable MovieCard and page layouts
 
 ## Tech Stack
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Container, Title, Button, Table, Modal, TextInput, Select, NumberInput, Group, ActionIcon, Text, Tabs, Textarea, ScrollArea, Image } from '@mantine/core';
-import { IconEdit, IconTrash, IconDownload } from '@tabler/icons-react';
+import { Container, Button, Table, Modal, TextInput, Select, NumberInput, Group, ActionIcon, Text, Tabs, Textarea, ScrollArea, Image, Paper, SimpleGrid } from '@mantine/core';
+import { IconEdit, IconTrash, IconDownload, IconSettings } from '@tabler/icons-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Movie, OmdbSearchResult } from '../types';
 import { notifications } from '@mantine/notifications';
+import PageHeader from '../components/PageHeader';
 
 interface MovieForm {
   title: string;
@@ -18,8 +19,16 @@ interface MovieForm {
 
 const emptyForm: MovieForm = { title: '', genre: '', year: 2025, rating: 7.0, poster: '', plot: '', director: '' };
 
+interface AdminStats {
+  activeMovies: number;
+  totalUsers: number;
+  totalMessages: number;
+  totalFavorites: number;
+}
+
 export default function AdminMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [opened, setOpened] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
   const [form, setForm] = useState<MovieForm>(emptyForm);
@@ -29,7 +38,10 @@ export default function AdminMovies() {
   const { token } = useAuth();
 
   useEffect(() => {
-    if (token) fetchMovies();
+    if (token) {
+      fetchMovies();
+      fetchStats();
+    }
   }, [token]);
 
   const fetchMovies = async () => {
@@ -38,6 +50,15 @@ export default function AdminMovies() {
       setMovies(res.data);
     } catch {
       notifications.show({ title: 'Error', message: 'Failed to load movies', color: 'red' });
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/stats');
+      setStats(res.data);
+    } catch {
+      /* ignore */
     }
   };
 
@@ -97,14 +118,32 @@ export default function AdminMovies() {
     }
   };
 
+  const statCards = stats ? [
+    { label: 'Active Movies', value: stats.activeMovies },
+    { label: 'Users', value: stats.totalUsers },
+    { label: 'Messages', value: stats.totalMessages },
+    { label: 'Favourites', value: stats.totalFavorites },
+  ] : [];
+
   return (
     <Container size="xl" py="xl">
-      <Group justify="space-between" mb="md">
-        <Title>Manage Movies (Admin)</Title>
-        <Button onClick={() => { setEditingMovie(null); setForm(emptyForm); setOpened(true); }}>Add New Movie</Button>
+      <Group justify="space-between" mb="md" align="flex-end">
+        <PageHeader title="Admin Dashboard" description="Manage the film catalogue and import from OMDB." icon={IconSettings} />
+        <Button color="cinema" onClick={() => { setEditingMovie(null); setForm(emptyForm); setOpened(true); }}>Add New Movie</Button>
       </Group>
 
-      <Tabs defaultValue="list">
+      {statCards.length > 0 && (
+        <SimpleGrid cols={{ base: 2, sm: 4 }} mb="xl">
+          {statCards.map((s) => (
+            <Paper key={s.label} p="md" withBorder ta="center">
+              <Text size="xl" fw={700} c="cinema.4">{s.value}</Text>
+              <Text size="sm" c="dimmed">{s.label}</Text>
+            </Paper>
+          ))}
+        </SimpleGrid>
+      )}
+
+      <Tabs defaultValue="list" color="cinema">
         <Tabs.List>
           <Tabs.Tab value="list">Movie List</Tabs.Tab>
           <Tabs.Tab value="omdb">Import from OMDB</Tabs.Tab>
@@ -152,7 +191,7 @@ export default function AdminMovies() {
             <Button onClick={searchOmdb} loading={loading}>Search</Button>
           </Group>
           {omdbResults.map((r) => (
-            <Group key={r.imdbID} justify="space-between" mb="sm" p="sm" wrap="nowrap" style={{ border: '1px solid #eee', borderRadius: 8 }}>
+            <Group key={r.imdbID} justify="space-between" mb="sm" p="sm" wrap="nowrap" style={{ border: '1px solid #373a40', borderRadius: 8 }}>
               {r.Poster && r.Poster !== 'N/A' && <Image src={r.Poster} w={40} h={60} alt={r.Title} radius="sm" />}
               <div style={{ flex: 1 }}>
                 <Text fw={500}>{r.Title}</Text>
@@ -172,7 +211,7 @@ export default function AdminMovies() {
         <TextInput label="Poster URL" mt="sm" value={form.poster} onChange={(e) => setForm({ ...form, poster: e.target.value })} />
         <TextInput label="Director" mt="sm" value={form.director} onChange={(e) => setForm({ ...form, director: e.target.value })} />
         <Textarea label="Plot" mt="sm" value={form.plot} onChange={(e) => setForm({ ...form, plot: e.target.value })} minRows={3} />
-        <Button fullWidth mt="md" onClick={saveMovie}>Save</Button>
+        <Button fullWidth mt="md" color="cinema" onClick={saveMovie}>Save</Button>
       </Modal>
     </Container>
   );

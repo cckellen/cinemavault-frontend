@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Container, Title, TextInput, Select, Grid, Card, Image, Badge, Button, Group, Text, NumberInput, Loader, Center, Stack } from '@mantine/core';
+import { Container, TextInput, Select, Grid, Group, Text, NumberInput, Loader, Center, Paper, Badge } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconHeart, IconSearch, IconEye, IconHeartFilled } from '@tabler/icons-react';
-import { Link } from 'react-router-dom';
+import { IconSearch, IconMovie } from '@tabler/icons-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Movie } from '../types';
 import { notifications } from '@mantine/notifications';
+import PageHeader from '../components/PageHeader';
+import MovieCard from '../components/MovieCard';
 
 export default function Movies() {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [genres, setGenres] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 400);
   const [genre, setGenre] = useState('');
@@ -20,6 +22,10 @@ export default function Movies() {
   const [error, setError] = useState('');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+
+  useEffect(() => {
+    api.get('/genres').then((res) => setGenres(res.data.genres)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchMovies();
@@ -89,51 +95,45 @@ export default function Movies() {
 
   return (
     <Container size="xl" py="xl">
-      <Title order={1} mb="md">Discover Movies</Title>
-      <Group mb="lg" grow preventGrowOverflow={false}>
-        <TextInput placeholder="Search title, plot or director..." value={search} onChange={(e) => setSearch(e.target.value)} leftSection={<IconSearch size={16} />} />
-        <Select placeholder="Genre" value={genre} onChange={(val) => setGenre(val || '')} data={['Action', 'Drama', 'Comedy', 'Sci-Fi', 'Horror', 'Thriller', 'Romance']} clearable />
-        <NumberInput placeholder="Year" value={year} onChange={(v) => setYear(v as number | '')} min={1900} max={2030} />
-        <NumberInput placeholder="Min Rating" value={minRating} onChange={(v) => setMinRating(v as number | '')} min={0} max={10} step={0.5} decimalScale={1} />
-        <Select placeholder="Sort by" value={sort} onChange={(val) => setSort(val || '')} data={[{ value: 'title', label: 'Title' }, { value: 'year', label: 'Year' }, { value: 'rating', label: 'Rating' }]} clearable />
-      </Group>
+      <div className="cv-hero" style={{ marginBottom: '2rem' }}>
+        <PageHeader
+          title="Discover Movies"
+          description="Browse, search and save your favourite films from the CinemaVault catalogue."
+          icon={IconMovie}
+        />
+        {!user && (
+          <Badge color="cinema" variant="light" size="lg">Sign in to save favourites and manage your watchlist</Badge>
+        )}
+      </div>
+
+      <Paper p="md" mb="lg" withBorder>
+        <Group grow preventGrowOverflow={false}>
+          <TextInput placeholder="Search title, plot or director..." value={search} onChange={(e) => setSearch(e.target.value)} leftSection={<IconSearch size={16} />} />
+          <Select placeholder="Genre" value={genre} onChange={(val) => setGenre(val || '')} data={genres.length ? genres : ['Action', 'Drama', 'Comedy', 'Sci-Fi', 'Horror', 'Thriller', 'Romance']} clearable />
+          <NumberInput placeholder="Year" value={year} onChange={(v) => setYear(v as number | '')} min={1900} max={2030} />
+          <NumberInput placeholder="Min Rating" value={minRating} onChange={(v) => setMinRating(v as number | '')} min={0} max={10} step={0.5} decimalScale={1} />
+          <Select placeholder="Sort by" value={sort} onChange={(val) => setSort(val || '')} data={[{ value: 'title', label: 'Title' }, { value: 'year', label: 'Year' }, { value: 'rating', label: 'Rating' }]} clearable />
+        </Group>
+      </Paper>
 
       {error && <Text c="red" mb="md">{error}</Text>}
       {loading ? (
-        <Center py="xl"><Loader /></Center>
+        <Center py="xl"><Loader color="cinema" /></Center>
+      ) : movies.length === 0 ? (
+        <Center py="xl"><Text c="dimmed">No movies found matching your criteria.</Text></Center>
       ) : (
         <Grid>
           {movies.map((movie) => (
             <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={movie.id}>
-              <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
-                <Card.Section>
-                  <Image src={movie.poster || 'https://via.placeholder.com/300x400?text=No+Poster'} h={280} alt={movie.title} />
-                </Card.Section>
-                <Group justify="space-between" mt="md" mb="xs">
-                  <Text fw={500} lineClamp={1}>{movie.title}</Text>
-                  {movie.rating != null && <Badge color="yellow">{movie.rating}</Badge>}
-                </Group>
-                <Text size="sm" c="dimmed">{movie.genre}{movie.year ? ` • ${movie.year}` : ''}</Text>
-                <Stack gap="xs" mt="md">
-                  <Button component={Link} to={`/movies/${movie.id}`} variant="light" leftSection={<IconEye size={16} />} fullWidth>Details</Button>
-                  {user && (
-                    <Group grow>
-                      <Button
-                        variant={favoriteIds.has(movie.id) ? 'filled' : 'subtle'}
-                        color={favoriteIds.has(movie.id) ? 'red' : 'gray'}
-                        leftSection={favoriteIds.has(movie.id) ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
-                        onClick={() => toggleFavorite(movie.id)}
-                      >
-                        {favoriteIds.has(movie.id) ? 'Favourited' : 'Favourite'}
-                      </Button>
-                      <Button variant="subtle" onClick={() => addToWatchlist(movie.id)}>Watchlist</Button>
-                    </Group>
-                  )}
-                </Stack>
-              </Card>
+              <MovieCard
+                movie={movie}
+                isFavourite={favoriteIds.has(movie.id)}
+                onToggleFavourite={user ? toggleFavorite : undefined}
+                onWatchlist={user ? (id) => addToWatchlist(id) : undefined}
+                showActions={!!user}
+              />
             </Grid.Col>
           ))}
-          {movies.length === 0 && <Text c="dimmed">No movies found matching your criteria.</Text>}
         </Grid>
       )}
     </Container>

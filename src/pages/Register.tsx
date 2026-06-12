@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TextInput, PasswordInput, Button, Container, Title, Paper, Alert } from '@mantine/core';
+import { TextInput, PasswordInput, Button, Container, Title, Paper, Alert, Text, Stack } from '@mantine/core';
+import { IconUserPlus, IconMovie } from '@tabler/icons-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -33,16 +34,22 @@ export default function Register() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">Register to CinemaVault</Title>
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        {error && <Alert color="red" mb="md">{error}</Alert>}
-        <TextInput label="Username" required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-        <TextInput label="Email" mt="md" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-        <PasswordInput label="Password" mt="md" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <Button fullWidth mt="xl" loading={loading} onClick={handleSubmit}>Register</Button>
-        <Button variant="subtle" fullWidth mt="sm" onClick={() => navigate('/login')}>Already have an account? Login</Button>
-      </Paper>
-    </Container>
+    <div className="cv-auth-bg">
+      <Container size={420} py="xl">
+        <Stack align="center" mb="lg">
+          <IconMovie size={48} color="#ffd147" />
+          <Title order={2} ta="center">Join CinemaVault</Title>
+          <Text c="dimmed" ta="center" size="sm">Create your account and start building your personal film collection.</Text>
+        </Stack>
+        <Paper withBorder shadow="md" p={30} radius="md">
+          {error && <Alert color="red" mb="md">{error}</Alert>}
+          <TextInput label="Username" required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          <TextInput label="Email" mt="md" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <PasswordInput label="Password" mt="md" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <Button fullWidth mt="xl" color="cinema" leftSection={<IconUserPlus size={18} />} loading={loading} onClick={handleSubmit}>Register</Button>
+          <Button variant="subtle" fullWidth mt="sm" onClick={() => navigate('/login')}>Already have an account? Login</Button>
+        </Paper>
+      </Container>
+    </div>
   );
 }

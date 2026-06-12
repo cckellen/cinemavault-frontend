@@ -1,18 +1,35 @@
 import { useState } from 'react';
-import { Container, Title, Paper, TextInput, Button, Avatar, Group, FileInput, Text } from '@mantine/core';
+import { Container, Paper, TextInput, Button, Avatar, Group, FileInput, Badge, Stack } from '@mantine/core';
+import { IconUser, IconDeviceFloppy } from '@tabler/icons-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useAvatarUrl } from '../hooks/useAvatarUrl';
 import { notifications } from '@mantine/notifications';
+import PageHeader from '../components/PageHeader';
 
 const MAX_SIZE = Number(import.meta.env.VITE_MAX_UPLOAD_SIZE) || 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
+  const [username, setUsername] = useState(user?.username || '');
   const [avatar, setAvatar] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const avatarSrc = useAvatarUrl(user);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await api.put('/profile', { username });
+      updateUser({ username: res.data.username });
+      notifications.show({ title: 'Saved', message: 'Profile updated successfully', color: 'green' });
+    } catch {
+      notifications.show({ title: 'Error', message: 'Failed to update profile', color: 'red' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!avatar) return;
@@ -43,18 +60,21 @@ export default function Profile() {
 
   return (
     <Container size="sm" py="xl">
-      <Title>Profile</Title>
-      <Paper p="xl" mt="md" withBorder>
-        <Group>
+      <PageHeader title="My Profile" description="Manage your account details and profile photo." icon={IconUser} />
+      <Paper p="xl" withBorder>
+        <Group align="flex-start" wrap="wrap">
           <Avatar size={120} src={avatarSrc} radius="md" />
-          <div>
-            <TextInput label="Username" value={user?.username || ''} readOnly />
-            <TextInput label="Email" value={user?.email || ''} mt="md" readOnly />
-            <Text size="sm" c="dimmed" mt="xs">Role: {user?.role}</Text>
-          </div>
+          <Stack gap="xs" style={{ flex: 1, minWidth: 200 }}>
+            <TextInput label="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <TextInput label="Email" value={user?.email || ''} readOnly />
+            <Badge color={user?.role === 'ADMIN' ? 'cinema' : 'gray'} variant="light">Role: {user?.role}</Badge>
+            <Button color="cinema" leftSection={<IconDeviceFloppy size={16} />} onClick={handleSaveProfile} loading={saving} w="fit-content">
+              Save Changes
+            </Button>
+          </Stack>
         </Group>
-        <FileInput label="Upload Profile Photo" placeholder="Choose image (max 5MB)" onChange={setAvatar} accept="image/*" mt="md" />
-        <Button mt="md" onClick={handleUpload} loading={uploading} disabled={!avatar}>Upload Avatar</Button>
+        <FileInput label="Upload Profile Photo" placeholder="Choose image (max 5MB)" onChange={setAvatar} accept="image/*" mt="xl" />
+        <Button mt="md" color="cinema" onClick={handleUpload} loading={uploading} disabled={!avatar}>Upload Avatar</Button>
       </Paper>
     </Container>
   );

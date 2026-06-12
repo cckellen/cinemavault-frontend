@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Container, Title, Tabs, Grid, Card, Image, Badge, Text, Button, Group, Loader, Center } from '@mantine/core';
-import { IconCheck, IconTrash } from '@tabler/icons-react';
-import { Link } from 'react-router-dom';
+import { Container, Tabs, Grid, Loader, Center } from '@mantine/core';
+import { IconCheck, IconBookmark } from '@tabler/icons-react';
 import api from '../services/api';
 import { WatchlistItem } from '../types';
 import { notifications } from '@mantine/notifications';
+import PageHeader from '../components/PageHeader';
+import MovieCard from '../components/MovieCard';
+import EmptyState from '../components/EmptyState';
 
 export default function Watchlist() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
@@ -50,42 +52,47 @@ export default function Watchlist() {
     }
   };
 
-  const renderGrid = (items: WatchlistItem[], showMarkWatched = false) => (
-    <Grid>
-      {items.length > 0 ? items.map((movie) => (
-        <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={movie.id}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Card.Section component={Link} to={`/movies/${movie.id}`} style={{ cursor: 'pointer' }}>
-              <Image src={movie.poster || 'https://via.placeholder.com/300'} h={250} alt={movie.title} />
-            </Card.Section>
-            <Group justify="space-between" mt="md" mb="xs">
-              <Text fw={500}>{movie.title}</Text>
-              {movie.rating != null && <Badge color="yellow">{movie.rating}</Badge>}
-            </Group>
-            <Group mt="md">
-              {showMarkWatched && (
-                <Button size="xs" leftSection={<IconCheck size={14} />} onClick={() => markWatched(movie.id)}>Mark Watched</Button>
-              )}
-              <Button size="xs" color="red" variant="light" leftSection={<IconTrash size={14} />} onClick={() => removeItem(movie.id)}>Remove</Button>
-            </Group>
-          </Card>
-        </Grid.Col>
-      )) : <Text c="dimmed">No items in this list.</Text>}
-    </Grid>
-  );
+  const renderGrid = (items: WatchlistItem[], emptyTitle: string, showMarkWatched = false) => {
+    if (items.length === 0) {
+      return (
+        <EmptyState
+          icon={showMarkWatched ? IconBookmark : IconCheck}
+          title={emptyTitle}
+          description="Add films from the movie catalogue to track what you want to watch."
+          actionLabel="Browse Movies"
+          actionTo="/movies"
+        />
+      );
+    }
+    return (
+      <Grid>
+        {items.map((movie) => (
+          <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={movie.id}>
+            <MovieCard
+              movie={movie}
+              showActions
+              onWatchlist={showMarkWatched ? markWatched : undefined}
+              watchlistLabel="Mark Watched"
+              onRemove={removeItem}
+            />
+          </Grid.Col>
+        ))}
+      </Grid>
+    );
+  };
 
-  if (loading) return <Center py="xl"><Loader /></Center>;
+  if (loading) return <Center py="xl"><Loader color="cinema" /></Center>;
 
   return (
     <Container size="xl" py="xl">
-      <Title order={1} mb="md">My Watchlist</Title>
-      <Tabs defaultValue="watchlist">
+      <PageHeader title="My Watchlist" description="Track films you plan to watch and those you have already seen." icon={IconBookmark} />
+      <Tabs defaultValue="watchlist" color="cinema">
         <Tabs.List>
           <Tabs.Tab value="watchlist">Want to Watch ({watchlist.length})</Tabs.Tab>
           <Tabs.Tab value="watched">Watched ({watched.length})</Tabs.Tab>
         </Tabs.List>
-        <Tabs.Panel value="watchlist" pt="md">{renderGrid(watchlist, true)}</Tabs.Panel>
-        <Tabs.Panel value="watched" pt="md">{renderGrid(watched)}</Tabs.Panel>
+        <Tabs.Panel value="watchlist" pt="md">{renderGrid(watchlist, 'Nothing on your watchlist', true)}</Tabs.Panel>
+        <Tabs.Panel value="watched" pt="md">{renderGrid(watched, 'No watched films yet')}</Tabs.Panel>
       </Tabs>
     </Container>
   );

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Container, Title, Grid, Card, Image, Badge, Text, Button, Group, Loader, Center } from '@mantine/core';
-import { IconTrash } from '@tabler/icons-react';
-import { Link } from 'react-router-dom';
+import { Container, Grid, Loader, Center } from '@mantine/core';
+import { IconHeart } from '@tabler/icons-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Movie } from '../types';
 import { notifications } from '@mantine/notifications';
+import PageHeader from '../components/PageHeader';
+import MovieCard from '../components/MovieCard';
+import EmptyState from '../components/EmptyState';
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState<Movie[]>([]);
@@ -38,30 +40,28 @@ export default function Favorites() {
     }
   };
 
-  if (loading) return <Center py="xl"><Loader /></Center>;
+  if (loading) return <Center py="xl"><Loader color="cinema" /></Center>;
 
   return (
     <Container size="xl" py="xl">
-      <Title order={1} mb="md">My Favourites</Title>
-      <Grid>
-        {favorites.length > 0 ? favorites.map((movie) => (
-          <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={movie.id}>
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-              <Card.Section component={Link} to={`/movies/${movie.id}`} style={{ cursor: 'pointer' }}>
-                <Image src={movie.poster || 'https://via.placeholder.com/300'} h={280} alt={movie.title} />
-              </Card.Section>
-              <Group justify="space-between" mt="md" mb="xs">
-                <Text fw={500}>{movie.title}</Text>
-                {movie.rating != null && <Badge color="yellow">{movie.rating}</Badge>}
-              </Group>
-              <Text size="sm" c="dimmed">{movie.genre}{movie.year ? ` • ${movie.year}` : ''}</Text>
-              <Button fullWidth mt="md" color="red" variant="light" leftSection={<IconTrash size={16} />} onClick={() => removeFavorite(movie.id)}>
-                Remove
-              </Button>
-            </Card>
-          </Grid.Col>
-        )) : <Text c="dimmed">No favourites yet. Browse movies to add some!</Text>}
-      </Grid>
+      <PageHeader title="My Favourites" description="Films you have saved to your personal collection." icon={IconHeart} />
+      {favorites.length === 0 ? (
+        <EmptyState
+          icon={IconHeart}
+          title="No favourites yet"
+          description="Browse the movie catalogue and tap Save on any film you love."
+          actionLabel="Discover Movies"
+          actionTo="/movies"
+        />
+      ) : (
+        <Grid>
+          {favorites.map((movie) => (
+            <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 3 }} key={movie.id}>
+              <MovieCard movie={movie} isFavourite showActions onToggleFavourite={removeFavorite} />
+            </Grid.Col>
+          ))}
+        </Grid>
+      )}
     </Container>
   );
 }

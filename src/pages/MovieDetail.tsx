@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Title, Image, Text, Badge, Group, Button, Paper, Loader, Center, Stack, Textarea, Modal } from '@mantine/core';
-import { IconHeart, IconArrowLeft, IconMessage, IconCheck } from '@tabler/icons-react';
+import { IconHeart, IconArrowLeft, IconMessage, IconCheck, IconBookmark } from '@tabler/icons-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Movie } from '../types';
@@ -68,36 +68,43 @@ export default function MovieDetail() {
     }
   };
 
-  if (loading) return <Center py="xl"><Loader size="lg" /></Center>;
+  if (loading) return <Center py="xl"><Loader color="cinema" size="lg" /></Center>;
   if (!movie) return <Container py="xl"><Text>Movie not found.</Text></Container>;
 
   return (
     <Container size="lg" py="xl">
-      <Button component={Link} to="/movies" variant="subtle" leftSection={<IconArrowLeft size={16} />} mb="md">Back to Movies</Button>
-      <Paper p="xl" withBorder>
+      <Button component={Link} to="/movies" variant="subtle" color="gray" leftSection={<IconArrowLeft size={16} />} mb="md">Back to Movies</Button>
+      <Paper p="xl" withBorder className="cv-movie-card">
         <Stack gap="xl">
           <Group align="flex-start" wrap="wrap" gap="xl">
-            <Image src={movie.poster || 'https://via.placeholder.com/300x450?text=No+Poster'} maw={300} w="100%" radius="md" alt={movie.title} />
+            <Image
+              src={movie.poster || 'https://via.placeholder.com/300x450?text=No+Poster'}
+              maw={300}
+              w="100%"
+              radius="md"
+              alt={movie.title}
+              fallbackSrc="https://via.placeholder.com/300x450?text=No+Poster"
+            />
             <Stack gap="sm" style={{ flex: 1, minWidth: 260 }}>
               <Title order={1}>{movie.title}</Title>
               <Group>
-                <Badge size="lg">{movie.genre}</Badge>
+                <Badge size="lg" color="cinema">{movie.genre}</Badge>
                 {movie.year && <Badge variant="outline">{movie.year}</Badge>}
-                {movie.rating != null && <Badge color="yellow" size="lg">IMDB {movie.rating}</Badge>}
+                {movie.rating != null && <Badge color="yellow" size="lg">★ {movie.rating}</Badge>}
                 {movie.runtime && <Badge variant="outline">{movie.runtime}</Badge>}
                 {movie.omdbId && <Badge variant="outline" color="blue">OMDB</Badge>}
               </Group>
               {movie.director && <Text><strong>Director:</strong> {movie.director}</Text>}
               {movie.castInfo && <Text><strong>Cast:</strong> {movie.castInfo}</Text>}
-              {movie.plot && <Text mt="md">{movie.plot}</Text>}
+              {movie.plot && <Text mt="md" c="dimmed" lh={1.6}>{movie.plot}</Text>}
             </Stack>
           </Group>
           {user && (
             <Group wrap="wrap">
-              <Button leftSection={<IconHeart size={16} />} onClick={addFavorite}>Add to Favourites</Button>
-              <Button variant="light" onClick={() => addWatchlist('WATCHLIST')}>Add to Watchlist</Button>
-              <Button variant="light" leftSection={<IconCheck size={16} />} onClick={() => addWatchlist('WATCHED')}>Mark Watched</Button>
-              <Button variant="outline" leftSection={<IconMessage size={16} />} onClick={() => { setMessageText(`I am interested in "${movie.title}". `); setMessageOpen(true); }}>Message Admin</Button>
+              <Button color="red" variant="light" leftSection={<IconHeart size={16} />} onClick={addFavorite}>Add to Favourites</Button>
+              <Button variant="light" color="cinema" leftSection={<IconBookmark size={16} />} onClick={() => addWatchlist('WATCHLIST')}>Add to Watchlist</Button>
+              <Button variant="light" color="green" leftSection={<IconCheck size={16} />} onClick={() => addWatchlist('WATCHED')}>Mark Watched</Button>
+              <Button variant="outline" color="gray" leftSection={<IconMessage size={16} />} onClick={() => { setMessageText(`I am interested in "${movie.title}". `); setMessageOpen(true); }}>Message Admin</Button>
             </Group>
           )}
         </Stack>
@@ -112,7 +119,7 @@ export default function MovieDetail() {
           minRows={4}
           required
         />
-        <Button fullWidth mt="md" onClick={sendMessage} disabled={!messageText.trim()}>Send Message</Button>
+        <Button fullWidth mt="md" color="cinema" onClick={sendMessage} disabled={!messageText.trim()}>Send Message</Button>
       </Modal>
     </Container>
   );
